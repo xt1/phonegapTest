@@ -1,0 +1,126 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>WordList Test</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1"> 
+    <link rel="stylesheet" href="jquery.mobile-1.2.0.css" />
+	<script src="jquery-1.8.2.min.js"></script>
+    <script src="jquery.mobile-1.2.0.js"></script>
+    <script src="phonegap.js"></script>
+</head>
+     
+<body>
+ 
+    <script>
+        $(function () {
+
+
+            $("#callAjax").click(function () {
+                var theName = $.trim($("#theName").val());
+
+                if (theName.length > 0) {
+                    $.ajax({
+                        type: "POST",
+                        url: "http://www.xt1.org/hello.php",
+                        data: ({ name: theName }),
+                        cache: false,
+                        dataType: "text",
+                        success: onSuccess
+                    });
+                }
+                $("#callAjaxDiv").hide();
+                $("#devid").html(device.uuid);
+            });
+
+            $("#resultLog").ajaxError(function (event, request, settings, exception) {
+                $("#resultLog").html("Error Calling: " + settings.url + "<br />HTTP Code: " + request.status);
+            });
+
+            $(document).delegate("#indexPage", "pageinit", function () {
+                $("#devid").html(device.name);
+                var networkState = navigator.connection.type;
+
+                if (networkState == Connection.NONE) {
+                    $("#callAjaxDiv").hide();
+                }
+
+            });
+
+
+            function onSuccess(data) {
+                $("#resultLog").html("Result: " + data);
+            }
+
+
+            $("#dbCreate").click(function () {
+                var db = window.openDatabase("test", "1.0", "Test DB", 10000);
+                db.transaction(populateDB, errorCB, successCB);
+            });
+
+            $("#dbFetch").click(function () {
+                var db = window.openDatabase("test", "1.0", "Test DB", 10000);
+                db.transaction(fetchDB, errorCB);
+            });
+
+            function errorCB(err) {
+                alert("Error processing SQL: " + err.code);
+            }
+            function successCB() {
+                alert("db success!");
+            }
+
+            function populateDB(tx) {
+                tx.executeSql('DROP TABLE IF EXISTS DEMO');
+                tx.executeSql('CREATE TABLE IF NOT EXISTS DEMO (id unique, data)');
+                tx.executeSql('INSERT INTO DEMO (id, data) VALUES (1, "First row")');
+                tx.executeSql('INSERT INTO DEMO (id, data) VALUES (2, "Second row")');
+                tx.executeSql('INSERT INTO DEMO (id, data) VALUES (3, "Third row")');
+                tx.executeSql('INSERT INTO DEMO (id, data) VALUES (4, "Fourth row")');
+                $("#dbCreateDiv").html("Database created");
+            }
+            function fetchDB(tx) {
+                tx.executeSql('SELECT * FROM DEMO', [], fetchSuccess, errorCB);
+            }
+            function fetchSuccess(tx, results) {
+                alert("query success!");
+                var msg = "Rows Affected=" + results.rowsAffected;
+                var len = results.rows.length;
+                msg += ", # rows =" + len + "<br>";
+                for (var i = 0; i < len; i++) {
+                    var row = results.rows.item(i);
+                    msg += "<p>Row = " + i + " ID = " + row.id + " Data =  " + row.data + "</p>";
+                }
+                $("#dbFetchDiv").html(msg);
+            }
+        });
+    </script>
+ 
+    <div data-role="page" id="indexPage">
+        <div data-role="header">
+            <h1>JQuery Mobile Test</h1>
+        </div>
+        <div data-role="content">
+            <div data-role="fieldcontain">
+                <label for="theName">Please enter your name:</label>
+                <input type="text" id="theName" name="theName" value="" />
+            </div>
+            <div id="callAjaxDiv">
+                <input id="callAjax" type="button" value="Call Ajax" />
+            </div>
+            <div id="resultLog"></div>
+            <div id="dbCreateDiv">
+                <input id="dbCreate" type="button" value="Create DB" />
+            </div>
+            <div id="dbFetchDiv">
+                <input id="dbFetch" type="button" value="Fetch DB" />
+            </div>
+        </div>
+ 
+        <div data-role="footer">
+            <h1>AJAX Demo</h1>
+            <h2 id="devid">Device name?</h2>
+        </div>
+    </div>
+ 
+</body>
+</html>
